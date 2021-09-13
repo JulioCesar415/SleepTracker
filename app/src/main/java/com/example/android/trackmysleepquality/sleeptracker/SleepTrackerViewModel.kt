@@ -17,9 +17,12 @@
 package com.example.android.trackmysleepquality.sleeptracker
 
 import android.app.Application
-import androidx.lifecycle.viewModelScope
-import androidx.lifecycle.AndroidViewModel
+import android.provider.SyncStateContract.Helpers.insert
+import androidx.lifecycle.*
 import com.example.android.trackmysleepquality.database.SleepDatabaseDao
+import com.example.android.trackmysleepquality.database.SleepNight
+import com.example.android.trackmysleepquality.formatNights
+import kotlinx.coroutines.launch
 
 /**
  * ViewModel for SleepTrackerFragment.
@@ -27,5 +30,91 @@ import com.example.android.trackmysleepquality.database.SleepDatabaseDao
 class SleepTrackerViewModel(
         val database: SleepDatabaseDao,
         application: Application) : AndroidViewModel(application) {
+//                define variable tonight to hold current night
+                private var tonight = MutableLiveData<SleepNight>()
+//        define nights, then getAllNights() from database
+        private val nights = database.getAllNights()
+//        define nightsString
+        val nightsString = Transformations.map(nights){ nights ->
+                formatNights(nights, application.resources)
+        }
+//        create init block to initialize tonight
+        init {
+            initializeTonight()
+        }
+
+//        define navigation event live data. set private to not expose val to fragment
+        private val _navigateToSleepQuality = MutableLiveData<SleepNight>()
+//        define public reference that has only getter which fragment will observe
+        val navigateToSleepQuality: LiveData<SleepNight>
+        get() = _navigateToSleepQuality
+
+//        reset navigation variable after navigating
+        fun doneNavigating(){
+                _navigateToSleepQuality.value = null
+        }
+
+//        implement initializeTonight(). use viewModelScope.launch to start coroutine
+        private fun initializeTonight(){
+                viewModelScope.launch {
+                        tonight.value = getTonightFromDatabase()
+                }
+        }
+
+//        implement getTonightFromDataBase
+        private suspend fun getTonightFromDatabase(): SleepNight? {
+                var night = database.getTonight()
+
+                if (night?.endTimeMilli != night?.startTimeMilli){
+                        night = null
+                }
+                return night
+        }
+
+//        implement onStartTracking
+        fun onStartTracking(){
+                viewModelScope.launch {
+//                        captures current time as the start time
+                        val newNight = SleepNight()
+//                        call insert() to insert it into database
+                        insert(newNight)
+//                        set tonight to new night
+                        tonight.value = getTonightFromDatabase()
+                }
+        }
+
+//        Define insert that takes SleepNight as argument
+        private suspend fun insert(night: SleepNight){
+//                insert night into the database
+                database.insert(night)
+        }
+
+//        define onStopTracking(). Launch a coroutine in the viewModelScope
+        fun onStopTracking(){
+                viewModelScope.launch {
+                        val oldNight = tonight.value?: return@launch
+                        oldNight.endTimeMilli = System.currentTimeMillis()
+                        update(oldNight)
+//                        trigger navigation
+                        _navigateToSleepQuality.value = oldNight
+                }
+        }
+
+//        implement update()
+        private suspend fun update(night: SleepNight){
+                database.update(night)
+        }
+
+//        implement onClear
+        fun onClear(){
+                viewModelScope.launch {
+                        clear()
+                        tonight.value = null
+                }
+        }
+
+        suspend fun clear(){
+                database.clear()
+        }
 }
 

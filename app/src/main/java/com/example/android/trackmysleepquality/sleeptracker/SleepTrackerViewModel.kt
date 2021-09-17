@@ -17,6 +17,7 @@
 package com.example.android.trackmysleepquality.sleeptracker
 
 import android.app.Application
+import android.provider.SyncStateContract.Helpers.get
 import android.provider.SyncStateContract.Helpers.insert
 import androidx.lifecycle.*
 import com.example.android.trackmysleepquality.database.SleepDatabaseDao
@@ -31,25 +32,50 @@ class SleepTrackerViewModel(
         val database: SleepDatabaseDao,
         application: Application) : AndroidViewModel(application) {
 //                define variable tonight to hold current night
-                private var tonight = MutableLiveData<SleepNight>()
+        private var tonight = MutableLiveData<SleepNight?>()
 //        define nights, then getAllNights() from database
         private val nights = database.getAllNights()
 //        define nightsString
         val nightsString = Transformations.map(nights){ nights ->
                 formatNights(nights, application.resources)
         }
+
+//        start button visibility
+        val startButtonVisible = Transformations.map(tonight){
+                null == it
+        }
+
+//        stop button visibility
+        val stopButtonVisible = Transformations.map(tonight){
+                null != it
+        }
+
+//        clear button visibility
+        val clearButtonVisible = Transformations.map(nights){
+                it?.isNotEmpty()
+        }
 //        create init block to initialize tonight
         init {
             initializeTonight()
         }
-
-//        define navigation event live data. set private to not expose val to fragment
+        //        define navigation event live data. set private to not expose val to fragment
         private val _navigateToSleepQuality = MutableLiveData<SleepNight>()
-//        define public reference that has only getter which fragment will observe
+        //        define public reference that has only getter which fragment will observe
         val navigateToSleepQuality: LiveData<SleepNight>
-        get() = _navigateToSleepQuality
+                get() = _navigateToSleepQuality
 
-//        reset navigation variable after navigating
+//        define snackbar when data is cleared
+        private var _showSnackbarEvent = MutableLiveData<Boolean>()
+//        define public reference that has only getter that fragment will observe
+        val showSnackBarEvent: LiveData<Boolean>
+        get() = _showSnackbarEvent
+
+//        implement doneShowingSnackbar
+        fun doneShowingSnackbar(){
+                _showSnackbarEvent.value = false
+        }
+
+        //        reset navigation variable after navigating
         fun doneNavigating(){
                 _navigateToSleepQuality.value = null
         }
@@ -92,7 +118,7 @@ class SleepTrackerViewModel(
 //        define onStopTracking(). Launch a coroutine in the viewModelScope
         fun onStopTracking(){
                 viewModelScope.launch {
-                        val oldNight = tonight.value?: return@launch
+                        val oldNight = tonight.value ?: return@launch
                         oldNight.endTimeMilli = System.currentTimeMillis()
                         update(oldNight)
 //                        trigger navigation
@@ -110,6 +136,7 @@ class SleepTrackerViewModel(
                 viewModelScope.launch {
                         clear()
                         tonight.value = null
+                        _showSnackbarEvent.value = true
                 }
         }
 

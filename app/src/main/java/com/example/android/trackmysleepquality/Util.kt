@@ -24,6 +24,7 @@ import android.text.Spanned
 import androidx.core.text.HtmlCompat
 import com.example.android.trackmysleepquality.database.SleepNight
 import java.text.SimpleDateFormat
+import java.util.*
 
 /**
  * These functions create a formatted string that can be set in a TextView.

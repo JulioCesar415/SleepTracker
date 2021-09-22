@@ -64,6 +64,20 @@ class SleepTrackerViewModel(
         val navigateToSleepQuality: LiveData<SleepNight>
                 get() = _navigateToSleepQuality
 
+//        define new live data for navigation
+        private val _navigateToSleepDataQuality = MutableLiveData<Long>()
+        val navigateToSleepDataQuality
+        get() = _navigateToSleepDataQuality
+
+
+        fun onSleepNightClicked(id: Long){
+                _navigateToSleepDataQuality.value = id
+        }
+
+        fun onSleepDataQualityNavigated(){
+                _navigateToSleepDataQuality.value = null
+        }
+
 //        define snackbar when data is cleared
         private var _showSnackbarEvent = MutableLiveData<Boolean>()
 //        define public reference that has only getter that fragment will observe

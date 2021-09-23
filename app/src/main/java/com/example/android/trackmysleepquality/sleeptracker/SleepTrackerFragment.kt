@@ -60,51 +60,15 @@ class SleepTrackerFragment : Fragment() {
 //        get reference to the SleepTrackerViewModel
         val sleepTrackerViewModel =
             ViewModelProvider(
-                this, viewModelFactory
-            ).get(SleepTrackerViewModel::class.java)
-//        set current activity as the lifecycle owner of the binding
-        binding.lifecycleOwner = this
+                this, viewModelFactory).get(SleepTrackerViewModel::class.java)
 
         //        assing sleepTrackerViewModel binding variable to the sleepTrackerViewModel
         binding.sleepTrackerViewModel = sleepTrackerViewModel
+//        set current activity as the lifecycle owner of the binding
+        binding.lifecycleOwner = this
 
-//        add GridLayout
-        val manager = GridLayoutManager(activity, 3)
-        binding.sleepList.layoutManager = manager
-
-        val adapter = SleepNightAdapter(SleepNightAdapter.SleepNightListener { nightId ->
-            sleepTrackerViewModel.onSleepNightClicked(nightId)
-        })
-        binding.sleepList.adapter = adapter
-
-//        observe live data
-        sleepTrackerViewModel.navigateToSleepDataQuality.observe(this, Observer { night ->
-            night?.let{
-                this.findNavController().navigate(
-                    SleepTrackerFragmentDirections
-                        .actionSleepTrackerFragmentToSleepQualityFragment(night)
-                )
-                sleepTrackerViewModel.onSleepDataQualityNavigated()
-            }
-        })
-
-        sleepTrackerViewModel.nights.observe(viewLifecycleOwner, Observer {
-            it?.let {
-                adapter.submitList(it)
-            }
-        })
-
-//        observe navigateToSleepQuality
-        sleepTrackerViewModel.navigateToSleepQuality.observe( viewLifecycleOwner, Observer { night ->
-            night?.let {
-                this.findNavController().navigate(
-                    SleepTrackerFragmentDirections.actionSleepTrackerFragmentToSleepQualityFragment(night.nightId)
-                )
-                sleepTrackerViewModel.doneNavigating()
-            }
-        })
-
-//        observe showSnackBarEvent
+        //        add observer on the state variable for showing a Snackbar message
+//        when the CLEAR button is pressed
         sleepTrackerViewModel.showSnackBarEvent.observe(viewLifecycleOwner, Observer {
             if (it == true){
                 Snackbar.make(
@@ -115,6 +79,45 @@ class SleepTrackerFragment : Fragment() {
                 sleepTrackerViewModel.doneShowingSnackbar()
             }
         })
+
+
+        sleepTrackerViewModel.navigateToSleepQuality.observe( viewLifecycleOwner, Observer { night ->
+            night?.let {
+                this.findNavController().navigate(
+                    SleepTrackerFragmentDirections.actionSleepTrackerFragmentToSleepQualityFragment(night.nightId)
+                )
+                sleepTrackerViewModel.doneNavigating()
+            }
+        })
+
+
+
+//        observe live data
+        sleepTrackerViewModel.navigateToSleepDataQuality.observe(viewLifecycleOwner, Observer { night ->
+            night?.let{
+                this.findNavController().navigate(
+                    SleepTrackerFragmentDirections
+                        .actionSleepTrackerFragmentToSleepDetailFragment())
+                sleepTrackerViewModel.onSleepDataQualityNavigated()
+            }
+        })
+
+
+        //        add GridLayout
+        val manager = GridLayoutManager(activity, 3)
+        binding.sleepList.layoutManager = manager
+
+        val adapter = SleepNightAdapter(SleepNightAdapter.SleepNightListener { nightId ->
+            sleepTrackerViewModel.onSleepNightClicked(nightId)
+        })
+        binding.sleepList.adapter = adapter
+
+        sleepTrackerViewModel.nights.observe(viewLifecycleOwner, Observer {
+            it?.let {
+                adapter.submitList(it)
+            }
+        })
+
 
         return binding.root
     }

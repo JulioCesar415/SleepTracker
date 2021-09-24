@@ -58,6 +58,11 @@
         android:name="com.example.android.trackmysleepquality.sleepdetail.SleepDetailFragment"
         android:label="SleepDetailFragment"
         tools:layout="@layout/fragment_sleep_detail">
+        <argument
+            android:name="sleepNightKey"
+            app:argType="long">
+
+        </argument>
         <action
             android:id="@+id/action_sleepDetailFragment_to_sleep_tracker_fragment"
             app:destination="@id/sleep_tracker_fragment" />

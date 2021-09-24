@@ -27,7 +27,7 @@ class SleepDetailFragment: Fragment() {
 
         val application = requireNotNull(this.activity).application
 
-        val arguments = SleepQualityFragmentArgs.fromBundle(arguments!!)
+        val arguments = SleepDetailFragmentArgs.fromBundle(arguments!!)
 
 //        create instance of ViewModel Factory
         val dataSource = SleepDatabase.getInstance(application).sleepDatabaseDao

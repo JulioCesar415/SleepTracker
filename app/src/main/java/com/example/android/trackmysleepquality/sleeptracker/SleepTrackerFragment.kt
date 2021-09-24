@@ -97,10 +97,11 @@ class SleepTrackerFragment : Fragment() {
             night?.let{
                 this.findNavController().navigate(
                     SleepTrackerFragmentDirections
-                        .actionSleepTrackerFragmentToSleepDetailFragment())
+                        .actionSleepTrackerFragmentToSleepDetailFragment(night))
                 sleepTrackerViewModel.onSleepDataQualityNavigated()
             }
         })
+
 
 
         //        add GridLayout
@@ -112,9 +113,10 @@ class SleepTrackerFragment : Fragment() {
         })
         binding.sleepList.adapter = adapter
 
+//        pass list of DataItem and call new AddHeaderAndSubmitList method
         sleepTrackerViewModel.nights.observe(viewLifecycleOwner, Observer {
             it?.let {
-                adapter.submitList(it)
+                adapter.addHeaderAndSubmitList(it)
             }
         })
 
